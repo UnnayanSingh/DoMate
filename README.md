@@ -1,7 +1,6 @@
 # DoMate
 
-DoMate is a task manager that helps you organize, track, and prioritize your daily tasks. It is designed to be simple, interactive, and user-friendly.
-
+DoMate is a personal task management application designed to help you stay organized, focused, and productive. With DoMate, you can easily add, edit, and delete tasks, set priority levels, and assign due dates to ensure you stay on top of your daily responsibilities. The app features an intuitive interface that allows you to drag and drop tasks for quick reordering, toggle between dark and light modes for comfortable viewing, and track your progress with an interactive completion bar. Additionally, DoMate supports exporting tasks to PDF or CSV and importing tasks from CSV, making it easy to back up or share your task lists. Its user-friendly design and offline functionality make it a reliable companion for managing tasks efficiently, whether for personal, academic, or professional use.
 ## Features
 
 - Add, edit, and delete tasks  
