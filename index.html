@@ -73,19 +73,17 @@ li.today{border:2px solid #fbbf24;}
 .actions{display:flex;gap:6px;}
 .btn-ghost{background:transparent;border:1px solid #e6e9ef;color:var(--text);}
 .stats{margin-top:14px;font-size:13px;background:#f9fafb;padding:8px;border-radius:8px;}
+
+/* Dark mode stats fix */
+[data-theme="dark"] .stats {
+  background:#2c2c3c;
+  color:#e2e8f0;
+}
+
 #themeToggle{margin-left:auto;background:var(--accent);}
 .progress-container{background:#e2e8f0;border-radius:8px;height:12px;margin-top:10px;}
 .progress-bar{height:100%;background:#0f62fe;border-radius:8px;width:0%;transition:width 0.5s ease;}
-/* Default stats style */
-#stats {
-  font-size: 14px;
-  margin-top: 12px;
-  color: #0b1220; /* dark text for light mode */
-}
-/* Dark mode */
-body[data-theme="dark"] #stats {
-  color: #e2e8f0; /* light text for dark background */
-}
+
 /* Floating Action Button */
 #fab{
   position:fixed; bottom:40px; right:40px;
@@ -100,10 +98,9 @@ body[data-theme="dark"] #stats {
   box-shadow:0 4px 12px var(--shadow); opacity:0; pointer-events:none; transition:all 0.5s ease;
 }
 .toast.show{opacity:1; pointer-events:auto;}
-/* Hit counter container */
-#hitCounter{margin-top:20px;text-align:center;}
-#hitCounter img{filter: brightness(1) invert(0); transition:filter 0.3s;}
-body[data-theme="dark"] #hitCounter img{filter: brightness(1.2) invert(1);}
+
+/* Hit counter */
+#hitCounter{margin-top:16px; text-align:center;}
 </style>
 </head>
 <body data-theme="light">
@@ -152,17 +149,17 @@ body[data-theme="dark"] #hitCounter img{filter: brightness(1.2) invert(1);}
   </div>
 
   <div class="stats" id="stats"></div>
+
+  <!-- Hit Counter -->
+  <div id="hitCounter">
+    <a href="https://www.hitwebcounter.com/" target="_blank">
+      <img src="https://hitwebcounter.com/counter/counter.php?page=21437314&style=0008&nbdigits=6&type=page&initCount=0" title="DoMate Visitors" alt="Hit Counter" border="0" />
+    </a>
+  </div>
 </div>
 
 <div id="fab">+</div>
 <div id="toast" class="toast"></div>
-
-<!-- HitWebCounter -->
-<div id="hitCounter">
-  <a href="https://www.hitwebcounter.com/" target="_blank">
-    <img src="https://hitwebcounter.com/counter/counter.php?page=21437314&style=0008&nbdigits=6&type=page&initCount=0" title="DoMate Page Views" alt="DoMate Page Views" border="0" />
-  </a>
-</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
@@ -223,7 +220,8 @@ function render(){
 
     const title=document.createElement('div'); title.className='title'; title.contentEditable=true; title.textContent=t.title;
     title.addEventListener('blur',()=>editTask(t.id,title.textContent));
-    title.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); title.blur(); }}); li.appendChild(title);
+    title.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); title.blur(); }});
+    li.appendChild(title);
 
     const pr=document.createElement('span'); pr.className=`priority ${t.priority}`; pr.textContent=t.priority; li.appendChild(pr);
 
