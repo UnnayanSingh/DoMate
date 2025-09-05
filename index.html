@@ -76,6 +76,17 @@ li.today{border:2px solid #fbbf24;}
 #themeToggle{margin-left:auto;background:var(--accent);}
 .progress-container{background:#e2e8f0;border-radius:8px;height:12px;margin-top:10px;}
 .progress-bar{height:100%;background:#0f62fe;border-radius:8px;width:0%;transition:width 0.5s ease;}
+/* Default stats style */
+#stats {
+  font-size: 14px;
+  margin-top: 12px;
+  color: #0b1220; /* dark text for light mode */
+}
+
+/* Dark mode */
+body.dark #stats {
+  color: #e2e8f0; /* light text for dark background */
+}
 /* Floating Action Button */
 #fab{
   position:fixed; bottom:40px; right:40px;
