@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Task Log</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;
+  --card:#fff;
+  --text:#0b1220;
+  --accent:#0f62fe;
+  --done:#64748b;
+  --shadow:rgba(10,20,40,0.08);
+  --toast-bg:#333;
+  --toast-color:#fff;
+}
+[data-theme="dark"]{
+  --bg:#1e1e2f;
+  --card:#2c2c3c;
+  --text:#f5f5f5;
+  --accent:#5aa9ff;
+  --done:#94a3b8;
+  --shadow:rgba(0,0,0,0.4);
+  --toast-bg:#eee;
+  --toast-color:#111;
+}
+body{
+  font-family:'Inter',system-ui,Segoe UI,Roboto,Arial;
+  background:var(--bg);
+  color:var(--text);
+  display:flex; justify-content:center; padding:30px;
+}
+.app{
+  width:100%; max-width:900px;
+  background:var(--card);
+  border-radius:16px;
+  box-shadow:0 8px 30px var(--shadow);
+  padding:24px;
+  position:relative;
+  transition:background 0.3s,color 0.3s;
+}
+h1{margin:0 0 14px;font-size:28px;}
+.controls,.filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+input,select,button{
+  padding:10px 12px;border-radius:8px;border:1px solid #e6e9ef;font-size:14px;outline:none;
+}
+button{cursor:pointer;background:var(--accent);color:#fff;border:none;}
+button:hover{opacity:0.9;}
+select{background:#fff;color:#111;}
+input[type="text"]{flex:2;}
+input[type="date"]{flex:1;}
+ul{list-style:none;padding:0;margin:0;display:grid;gap:10px;}
+li{
+  display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;
+  background:var(--card);border:1px solid #eef2f7;cursor:grab;
+  transition:all 0.3s ease;
+  position:relative;
+}
+li.dragging{opacity:0.5;transform:scale(1.02);}
+li:hover{box-shadow:0 4px 12px var(--shadow);}
+li.today{border:2px solid #fbbf24;}
+.title{flex:2;transition:color 0.3s;}
+.title[contenteditable]{outline:none;}
+.done .title{text-decoration:line-through;color:var(--done);}
+.priority{font-size:12px;padding:3px 8px;border-radius:6px;color:#fff;display:inline-block;}
+.low{background:#10b981;}
+.medium{background:#f59e0b;}
+.high{background:#ef4444;}
+.date{font-size:12px;color:#6b7280;}
+.overdue{color:#ef4444;font-weight:600;}
+.actions{display:flex;gap:6px;}
+.btn-ghost{background:transparent;border:1px solid #e6e9ef;color:var(--text);}
+.stats{margin-top:14px;font-size:13px;background:#f9fafb;padding:8px;border-radius:8px;}
+#themeToggle{margin-left:auto;background:var(--accent);}
+.progress-container{background:#e2e8f0;border-radius:8px;height:12px;margin-top:10px;}
+.progress-bar{height:100%;background:#0f62fe;border-radius:8px;width:0%;transition:width 0.5s ease;}
+/* Floating Action Button */
+#fab{
+  position:fixed; bottom:40px; right:40px;
+  width:60px; height:60px; border-radius:50%; background:var(--accent); color:#fff;
+  display:flex; justify-content:center; align-items:center; font-size:28px; cursor:pointer; box-shadow:0 6px 20px var(--shadow);
+  transition:all 0.3s ease;
+}
+#fab:hover{transform:scale(1.1);}
+.toast{
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  background:var(--toast-bg); color:var(--toast-color); padding:10px 20px; border-radius:8px;
+  box-shadow:0 4px 12px var(--shadow); opacity:0; pointer-events:none; transition:all 0.5s ease;
+}
+.toast.show{opacity:1; pointer-events:auto;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <h1>To-Do List</h1>
+    <button id="themeToggle">Dark Mode</button>
+  </div>
+
+  <div class="controls">
+    <input id="taskInput" type="text" placeholder="Task title...">
+    <input id="dateInput" type="date">
+    <select id="priorityInput">
+      <option value="low">Low Priority</option>
+      <option value="medium" selected>Medium Priority</option>
+      <option value="high">High Priority</option>
+    </select>
+    <button id="addBtn">Add</button>
+    <button id="clearBtn" class="btn-ghost">Clear done</button>
+    <select id="exportSelect">
+      <option value="">Export</option>
+      <option value="csv">Export CSV</option>
+      <option value="pdf">Export PDF</option>
+    </select>
+    <select id="importSelect">
+      <option value="">Import</option>
+      <option value="csv">Import CSV</option>
+    </select>
+    <input type="file" id="importFile" style="display:none">
+  </div>
+
+  <div class="filters">
+    <input id="searchBox" type="text" placeholder="Search tasks...">
+    <select id="filterSelect">
+      <option value="all">All Tasks</option>
+      <option value="pending">Pending</option>
+      <option value="done">Completed</option>
+      <option value="high">High Priority</option>
+    </select>
+  </div>
+
+  <ul id="list"></ul>
+
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+</div>
+
+<div id="fab">+</div>
+<div id="toast" class="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function(){
+const input=document.getElementById('taskInput');
+const dateInput=document.getElementById('dateInput');
+const priorityInput=document.getElementById('priorityInput');
+const addBtn=document.getElementById('addBtn');
+const clearBtn=document.getElementById('clearBtn');
+const list=document.getElementById('list');
+const stats=document.getElementById('stats');
+const progressBar=document.getElementById('progressBar');
+const exportSelect=document.getElementById('exportSelect');
+const importSelect=document.getElementById('importSelect');
+const importFile=document.getElementById('importFile');
+const searchBox=document.getElementById('searchBox');
+const filterSelect=document.getElementById('filterSelect');
+const themeToggle=document.getElementById('themeToggle');
+const fab=document.getElementById('fab');
+const toast=document.getElementById('toast');
+
+let tasks=JSON.parse(localStorage.getItem('pro_todo.tasks.v2')||'[]');
+
+function save(){ localStorage.setItem('pro_todo.tasks.v2',JSON.stringify(tasks)); render(); }
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2000); }
+
+function addTask(text,priority,due){ 
+  if(!text||!text.trim()) return; 
+  tasks.unshift({id:uid(),title:text.trim(),done:false,priority,due,created:Date.now(),notified:false}); 
+  save(); 
+  input.value=''; dateInput.value=''; priorityInput.value='medium';
+  showToast("Task Added!");
+}
+
+function toggleTask(id){ const t=tasks.find(x=>x.id===id); if(t){ t.done=!t.done; save(); } }
+function deleteTask(id){ tasks=tasks.filter(x=>x.id!==id); save(); showToast("Task Deleted!"); }
+function editTask(id,newTitle){ const t=tasks.find(x=>x.id===id); if(t){ t.title=newTitle.trim()||t.title; save(); } }
+function clearDone(){ tasks=tasks.filter(x=>!x.done); save(); showToast("Completed tasks cleared"); }
+
+function exportCSV(){ let csv="Title,Done,Priority,Due,Created\n"; tasks.forEach(t=>{ csv+=`"${t.title.replace(/"/g,'""')}",${t.done},${t.priority},${t.due||''},${new Date(t.created).toLocaleString()}\n`; }); const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="tasks.csv"; a.click(); showToast("Exported CSV"); }
+function exportPDF(){ const { jsPDF }=window.jspdf; const doc=new jsPDF(); doc.setFontSize(14); doc.text("Task Manager To-Do List",10,10); let y=20; tasks.forEach((t,i)=>{ let line=`${i+1}. [${t.done?'x':' '}] ${t.title} (${t.priority})`; if(t.due) line+=` Due: ${t.due}`; doc.text(line,10,y); y+=10; if(y>280){ doc.addPage(); y=20; } }); doc.save("tasks.pdf"); showToast("Exported PDF"); }
+function importCSVFile(file){ const reader=new FileReader(); reader.onload=function(e){ const text=e.target.result; const rows=text.split(/\r?\n/).slice(1); rows.forEach(r=>{ const cols=r.split(','); if(cols[0]) addTask(cols[0].replace(/^"|"$/g,''),cols[2]||'medium',cols[3]||''); }); showToast("Imported CSV"); }; reader.readAsText(file); }
+
+function render(){
+  list.innerHTML=''; 
+  let filtered=tasks.filter(t=>t.title.toLowerCase().includes(searchBox.value.toLowerCase()));
+  if(filterSelect.value==="pending") filtered=filtered.filter(t=>!t.done);
+  if(filterSelect.value==="done") filtered=filtered.filter(t=>t.done);
+  if(filterSelect.value==="high") filtered=filtered.filter(t=>t.priority==="high");
+
+  filtered.forEach((t,i)=>{
+    const li=document.createElement('li'); li.setAttribute('draggable','true');
+    if(t.done) li.classList.add('done');
+    if(t.due && !t.done && new Date(t.due)<new Date()) li.classList.add('overdue');
+
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!t.done; cb.addEventListener('change',()=>toggleTask(t.id)); li.appendChild(cb);
+
+    const title=document.createElement('div'); title.className='title'; title.contentEditable=true; title.textContent=t.title;
+    title.addEventListener('blur',()=>editTask(t.id,title.textContent));
+    title.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); title.blur(); }});
+    li.appendChild(title);
+
+    const pr=document.createElement('span'); pr.className=`priority ${t.priority}`; pr.textContent=t.priority; li.appendChild(pr);
+
+    if(t.due){ const d=document.createElement('span'); d.className='date'; d.textContent=`Due: ${t.due}`; li.appendChild(d); }
+
+    const actions=document.createElement('div'); actions.className='actions';
+    const del=document.createElement('button'); del.textContent='Delete'; del.className='btn-ghost'; del.addEventListener('click',()=>{ if(confirm('Delete this task?')) deleteTask(t.id); });
+    actions.appendChild(del); li.appendChild(actions);
+
+    list.appendChild(li);
+
+    li.addEventListener('dragstart',()=>li.classList.add('dragging'));
+    li.addEventListener('dragend',()=>{ li.classList.remove('dragging'); reorderTasks(); });
+  });
+
+  const total=tasks.length;
+  const completed=tasks.filter(t=>t.done).length;
+  progressBar.style.width=total?((completed/total)*100)+'%':'0%';
+  stats.textContent=`Pending: ${total-completed} • Completed: ${completed} • Total: ${total}`;
+  checkNotifications();
+}
+
+// Drag & drop reorder
+function reorderTasks(){ 
+  const newOrder=[];
+  list.querySelectorAll('li').forEach(li=>{
+    const id=tasks.find(t=>t.title===li.querySelector('.title').textContent)?.id;
+    if(id) newOrder.push(tasks.find(t=>t.id===id));
+  });
+  tasks=newOrder; save();
+}
+
+// Notifications
+function checkNotifications(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  list.querySelectorAll('li').forEach((li,i)=>{
+    const task=tasks[i]; if(!task) return;
+    li.classList.remove('today'); 
+    if(task.due){
+      const dueDate=new Date(task.due); dueDate.setHours(0,0,0,0);
+      if(!task.done && dueDate.getTime()===today.getTime()){ li.classList.add('today'); }
+    }
+  });
+}
+function notifyOverdue(){
+  if(!("Notification" in window)) return;
+  tasks.forEach(task=>{
+    if(!task.done && task.due){
+      const dueDate=new Date(task.due);
+      if(dueDate < new Date() && !task.notified){
+        if(Notification.permission==="granted"){
+          new Notification("Overdue Task!",{
+            body: task.title + " is overdue!",
+            icon:"https://img.icons8.com/color/48/000000/task.png"
+          });
+          task.notified=true; save();
+        }
+      }
+    }
+  });
+}
+if("Notification" in window && Notification.permission!=="granted"){
+  Notification.requestPermission();
+}
+
+// Events
+addBtn.addEventListener('click',()=>addTask(input.value,priorityInput.value,dateInput.value));
+input.addEventListener('keydown',e=>{ if(e.key==='Enter') addTask(input.value,priorityInput.value,dateInput.value); });
+clearBtn.addEventListener('click',()=>{ if(confirm('Clear all completed tasks?')) clearDone(); });
+exportSelect.addEventListener('change',()=>{ if(exportSelect.value==="csv") exportCSV(); else if(exportSelect.value==="pdf") exportPDF(); exportSelect.value=""; });
+importSelect.addEventListener('change',()=>{ if(importSelect.value==="csv") importFile.click(); importSelect.value=""; });
+importFile.addEventListener('change',e=>{ if(e.target.files[0]) importCSVFile(e.target.files[0]); });
+searchBox.addEventListener('input',render);
+filterSelect.addEventListener('change',render);
+themeToggle.addEventListener('click',()=>{
+  document.body.dataset.theme=document.body.dataset.theme==='dark'?'light':'dark';
+  themeToggle.textContent=document.body.dataset.theme==='dark'?'Light Mode':'Dark Mode';
+});
+fab.addEventListener('click',()=>{ input.focus(); showToast("Enter task and press Add"); });
+
+// Periodic checks
+setInterval(()=>{ checkNotifications(); notifyOverdue(); },5000);
+
+render();
+})();
+</script>
+</body>
+</html>
