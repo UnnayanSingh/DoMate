@@ -14,7 +14,7 @@ DoMate is a personal task management application designed to help you stay organ
 
 ## Live Demo
 
-You can view the live app here: [DoMate Live Demo]  
+You can view the live app here: (https://unnayansingh.github.io/DoMate)
 
 ## Usage
 
